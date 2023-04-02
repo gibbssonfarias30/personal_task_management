@@ -3,7 +3,6 @@ package com.backfcdev.personal_task_management.controller;
 import com.backfcdev.personal_task_management.model.Task;
 import com.backfcdev.personal_task_management.model.dto.TaskDTO;
 import com.backfcdev.personal_task_management.service.ITaskService;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
@@ -11,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @RestController
@@ -20,47 +20,56 @@ public class TaskController {
     private final ModelMapper mapper;
 
     @GetMapping
-    ResponseEntity<List<Task>> findAll(){
-        return new ResponseEntity<>(taskService.getAll(), HttpStatus.OK);
+    ResponseEntity<List<TaskDTO>> findAll() {
+        return ResponseEntity.ok(taskService.findAll()
+                .stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList()));
     }
+
     @PostMapping
-    ResponseEntity<Task> saveTask(@RequestBody TaskDTO taskDTO){
-        return new ResponseEntity<>(taskService.save(taskDTO), HttpStatus.CREATED);
+    ResponseEntity<TaskDTO> save(@RequestBody TaskDTO taskDTO) {
+        Task task = taskService.save(convertToEntity(taskDTO));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(convertToDto(task));
     }
 
     @GetMapping("/{id}")
-    ResponseEntity<Task> findTaskById(@PathVariable long id){
-        return new ResponseEntity<>(taskService.getById(id), HttpStatus.CREATED);
+    ResponseEntity<TaskDTO> findById(@PathVariable long id) {
+        return ResponseEntity.ok(convertToDto(taskService.findById(id)));
     }
 
     @PutMapping("/{id}")
-    ResponseEntity<Task> updateTask(@PathVariable long id, @RequestBody TaskDTO taskDTO){
-        return new ResponseEntity<>(taskService.update(id, taskDTO), HttpStatus.OK);
+    ResponseEntity<TaskDTO> update(@PathVariable long id, @RequestBody TaskDTO taskDTO) {
+        Task task = taskService.update(id, convertToEntity(taskDTO));
+        return ResponseEntity.ok(convertToDto(task));
     }
 
     @GetMapping("/status/{status}")
-    ResponseEntity<List<Task>> getAllTasksAccordingToStatus(@PathVariable String status){
-        return new ResponseEntity<>(taskService.getAllTasksAccordingToStatus(status),
-                                    HttpStatus.OK);
+    ResponseEntity<List<TaskDTO>> getAllTasksAccordingToStatus (@PathVariable String status){
+        return ResponseEntity.ok(taskService.getAllTasksAccordingToStatus(status)
+                .stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList()));
     }
 
     @GetMapping("/accomplished/{id}")
-    ResponseEntity<Task> markTaskAccomplished(@PathVariable long id){
-        return new ResponseEntity<>(taskService.markTaskAccomplished(id), HttpStatus.OK);
+    ResponseEntity<TaskDTO> markTaskAccomplished(@PathVariable long id){
+        return ResponseEntity.ok(convertToDto(taskService.markTaskAccomplished(id)));
     }
 
     @DeleteMapping("/{id}")
-    ResponseEntity<Long> deleteTaskById(@PathVariable long id){
-        return new ResponseEntity<>(taskService.deleteById(id), HttpStatus.NO_CONTENT);
+    ResponseEntity<Void> deleteById (@PathVariable long id){
+        taskService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
 
-
-    public Task convertToEntity(TaskDTO dto){
+    public Task convertToEntity (TaskDTO dto){
         return mapper.map(dto, Task.class);
     }
 
-    public TaskDTO convertToDto(Task entity){
+    public TaskDTO convertToDto (Task entity){
         return mapper.map(entity, TaskDTO.class);
     }
 }
