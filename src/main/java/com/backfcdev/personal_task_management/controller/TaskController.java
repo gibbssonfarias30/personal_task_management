@@ -4,20 +4,23 @@ import com.backfcdev.personal_task_management.model.Task;
 import com.backfcdev.personal_task_management.model.dto.TaskDTO;
 import com.backfcdev.personal_task_management.service.ITaskService;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/tasks")
 public class TaskController {
     private final ITaskService taskService;
+    private final ModelMapper mapper;
 
     @GetMapping
-    ResponseEntity<List<Task>> findAllTasks(){
+    ResponseEntity<List<Task>> findAll(){
         return new ResponseEntity<>(taskService.getAll(), HttpStatus.OK);
     }
     @PostMapping
@@ -49,5 +52,15 @@ public class TaskController {
     @DeleteMapping("/{id}")
     ResponseEntity<Long> deleteTaskById(@PathVariable long id){
         return new ResponseEntity<>(taskService.deleteById(id), HttpStatus.NO_CONTENT);
+    }
+
+
+
+    public Task convertToEntity(TaskDTO dto){
+        return mapper.map(dto, Task.class);
+    }
+
+    public TaskDTO convertToDto(Task entity){
+        return mapper.map(entity, TaskDTO.class);
     }
 }
